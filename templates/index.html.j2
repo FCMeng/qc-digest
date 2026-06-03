@@ -251,7 +251,6 @@
                 <span class="tag">Paper</span>
                 <span>{{ item.source }}</span>
                 {% if item.published_date %}<span>{{ item.published_date }}</span>{% endif %}
-                <span>Score {{ "%.1f"|format(item.score) }}</span>
               </div>
               <h3>{{ item.title }}</h3>
               <p>{{ item.summary }}</p>
@@ -275,7 +274,6 @@
                 <span class="tag news">News</span>
                 <span>{{ item.source }}</span>
                 {% if item.published_date %}<span>{{ item.published_date }}</span>{% endif %}
-                <span>Score {{ "%.1f"|format(item.score) }}</span>
               </div>
               <h3>{{ item.title }}</h3>
               <p>{{ item.summary }}</p>
