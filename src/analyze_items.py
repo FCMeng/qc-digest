@@ -32,28 +32,34 @@ def deduplicate_raw(items: Iterable[RawItem]) -> List[RawItem]:
     return result
 
 
-def pre_rank(items: List[RawItem], max_candidates: int = 45) -> List[RawItem]:
+def pre_rank(items: List[RawItem], track_config: Dict[str, object], max_candidates: int = 60) -> List[RawItem]:
+    keywords = [str(keyword).lower() for keyword in track_config.get("keywords", [])]
+    paper_terms = [str(term).lower() for term in track_config.get("paper_terms", [])]
+
     def score(item: RawItem) -> float:
         text = "{} {}".format(item.title, item.raw_text).lower()
         keyword_hits = sum(
             1
-            for keyword in [
-                "quantum computing",
-                "qubit",
-                "quantum error correction",
-                "quantum algorithm",
-                "quantum processor",
-                "quantum chip",
-                "fault tolerant",
-                "quantum cryptography",
-            ]
+            for keyword in keywords + paper_terms
             if keyword in text
         )
-        source_bonus = 1.5 if item.source_type == "arxiv" else 1.0
+        source_bonus = 4.0 if item.source_type == "arxiv" else 1.0
         date_bonus = item.published.timestamp() / 10_000_000_000 if item.published else 0
         return keyword_hits * 2 + source_bonus + date_bonus
 
     return sorted(items, key=score, reverse=True)[:max_candidates]
+
+
+def balanced_candidates(items: List[RawItem], track_config: Dict[str, object], max_candidates: int = 60, min_papers: int = 20) -> List[RawItem]:
+    deduped = deduplicate_raw(items)
+    papers = pre_rank([item for item in deduped if item.source_type == "arxiv"], track_config, max_candidates=max_candidates)
+    news = pre_rank([item for item in deduped if item.source_type != "arxiv"], track_config, max_candidates=max_candidates)
+
+    selected = papers[:min_papers]
+    selected.extend(news[: max_candidates - len(selected)])
+    if len(selected) < max_candidates:
+        selected.extend(papers[min_papers:max_candidates])
+    return deduplicate_raw(selected)[:max_candidates]
 
 
 def deduplicate_digest(items: Iterable[DigestItem]) -> List[DigestItem]:
@@ -73,7 +79,7 @@ def deduplicate_digest(items: Iterable[DigestItem]) -> List[DigestItem]:
 
 
 def analyze_items(raw_items: List[RawItem], track_config: Dict[str, object], track: str, limit: int = 10) -> List[DigestItem]:
-    candidates = pre_rank(deduplicate_raw(raw_items))
+    candidates = balanced_candidates(raw_items, track_config)
     prompt_items = [item.to_prompt_dict(index) for index, item in enumerate(candidates)]
 
     llm = LLMClient()

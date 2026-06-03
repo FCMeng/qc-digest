@@ -85,7 +85,7 @@ def entry_datetime(entry):
     return as_utc(date_parser.parse(value)) if value else None
 
 
-def fetch_arxiv_rss(categories: List[str], terms: List[str], track: str, max_results: int, days_back: int) -> List[RawItem]:
+def fetch_arxiv_rss(categories: List[str], terms: List[str], track: str, max_results: int, days_back: int, filter_terms: bool = False) -> List[RawItem]:
     cutoff = utc_now() - timedelta(days=days_back)
     terms_lower = [term.lower() for term in terms]
     items: List[RawItem] = []
@@ -101,7 +101,7 @@ def fetch_arxiv_rss(categories: List[str], terms: List[str], track: str, max_res
             title = " ".join(getattr(entry, "title", "").split())
             summary = " ".join(getattr(entry, "summary", "").split())
             combined = "{} {}".format(title, summary).lower()
-            if terms_lower and not any(term in combined for term in terms_lower):
+            if filter_terms and terms_lower and not any(term in combined for term in terms_lower):
                 continue
 
             link = getattr(entry, "link", "")

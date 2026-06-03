@@ -29,6 +29,7 @@ class LLMClient:
                 "Classify arXiv/manuscript items as papers and journalism/company/government/reporting items as news.",
                 "For every paper, choose exactly one category from the allowed paper categories.",
                 "For news, use category null.",
+                "If paper candidates are available, include several strong papers in the final selection rather than selecting only news.",
                 "Prefer recent, technically meaningful, or high-impact items.",
                 "Write each summary in 2-3 concise sentences.",
                 "Use the original URL from the candidate item.",
