@@ -73,6 +73,14 @@
         display: grid;
         gap: 6px;
       }
+      .archive-date {
+        margin: 12px 0 4px;
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 750;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
       .archive-list a {
         display: block;
         border-radius: 6px;
@@ -85,6 +93,20 @@
       .archive-list a.active {
         background: #e7efec;
         color: var(--accent);
+      }
+      details.more-runs {
+        margin-top: 10px;
+        border-top: 1px solid var(--line);
+        padding-top: 10px;
+      }
+      details.more-runs summary {
+        cursor: pointer;
+        color: var(--accent);
+        font-weight: 750;
+        list-style: none;
+      }
+      details.more-runs summary::-webkit-details-marker {
+        display: none;
       }
       section {
         margin-top: 0;
@@ -184,12 +206,34 @@
           <h2>Runs</h2>
           {% if archives %}
           <ul class="archive-list">
-            {% for archive in archives %}
+            {% set ns = namespace(last_date='') %}
+            {% for archive in visible_archives %}
+            {% if archive.display_date != ns.last_date %}
+            <li class="archive-date">{{ archive.display_date }}</li>
+            {% set ns.last_date = archive.display_date %}
+            {% endif %}
             <li>
-              <a class="{% if archive.slug == active_archive_slug %}active{% endif %}" href="{{ archive.url }}">{{ archive.title }}</a>
+              <a class="{% if archive.slug == active_archive_slug %}active{% endif %}" href="{{ archive.url }}" title="{{ archive.title }}">{{ archive.display_time }}</a>
             </li>
             {% endfor %}
           </ul>
+          {% if older_archives %}
+          <details class="more-runs">
+            <summary>More runs</summary>
+            <ul class="archive-list">
+              {% set older = namespace(last_date='') %}
+              {% for archive in older_archives %}
+              {% if archive.display_date != older.last_date %}
+              <li class="archive-date">{{ archive.display_date }}</li>
+              {% set older.last_date = archive.display_date %}
+              {% endif %}
+              <li>
+                <a class="{% if archive.slug == active_archive_slug %}active{% endif %}" href="{{ archive.url }}" title="{{ archive.title }}">{{ archive.display_time }}</a>
+              </li>
+              {% endfor %}
+            </ul>
+          </details>
+          {% endif %}
           {% else %}
           <p class="meta">No archived runs yet.</p>
           {% endif %}
