@@ -65,7 +65,7 @@ jobs:
         if: steps.eastern_schedule.outputs.should_run == 'true'
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-5-mini' }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-5.4-mini' }}
           DIGEST_INTERVAL_DAYS: "3"
           SKIP_EMAIL: "true"
         run: python src/run_digest.py

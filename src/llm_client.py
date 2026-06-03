@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 from openai import OpenAI
 
 
-DEFAULT_MODEL = "gpt-5-mini"
+DEFAULT_MODEL = "gpt-5.4-mini"
 
 
 class LLMClient:

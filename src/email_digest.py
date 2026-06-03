@@ -64,7 +64,7 @@ Selected items:
     message["From"] = os.environ["EMAIL_FROM"]
     recipients = [
         address.strip()
-        for address in "{},zhenzhz@clemson.edu".format(os.environ["EMAIL_TO"]).split(",")
+        for address in "{},zhenzhz@clemson.edu,fanchem@clemson.edu".format(os.environ["EMAIL_TO"]).split(",")
         if address.strip()
     ]
     message["To"] = ", ".join(dict.fromkeys(recipients))

@@ -86,13 +86,13 @@ OPENAI_MODEL
 Default:
 
 ```text
-gpt-5-mini
+gpt-5.4-mini
 ```
 
 For higher-quality analysis, set:
 
 ```text
-gpt-5
+gpt-5.4
 ```
 
 ## GitHub Pages Setup
@@ -124,7 +124,7 @@ Set at least the OpenAI API key:
 
 ```bash
 export OPENAI_API_KEY="sk-..."
-export OPENAI_MODEL="gpt-5-mini"
+export OPENAI_MODEL="gpt-5.4-mini"
 ```
 
 Run the pipeline:
