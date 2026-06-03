@@ -12,6 +12,7 @@ TRACKS = {
             "quantum hardware devices",
             "quantum information theory",
         ],
+        "arxiv_query": "cat:quant-ph",
         "news_queries": [
             "quantum computing",
             "quantum information",
@@ -57,6 +58,7 @@ TRACKS = {
             "trustworthy AI",
             "AI systems",
         ],
+        "arxiv_query": "cat:cs.AI OR cat:cs.LG OR cat:cs.CL OR cat:cs.CV OR cat:stat.ML OR cat:cs.RO",
         "news_queries": [
             "artificial intelligence",
             "machine learning",

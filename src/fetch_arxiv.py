@@ -19,9 +19,9 @@ def build_query(term: str) -> str:
     return 'all:"{}"'.format(term)
 
 
-def fetch_arxiv_term(term: str, track: str, max_results: int, days_back: int) -> List[RawItem]:
+def fetch_arxiv_query(search_query: str, track: str, max_results: int, days_back: int) -> List[RawItem]:
     params = {
-        "search_query": build_query(term),
+        "search_query": search_query,
         "start": 0,
         "max_results": max_results,
         "sortBy": "submittedDate",
@@ -35,14 +35,14 @@ def fetch_arxiv_term(term: str, track: str, max_results: int, days_back: int) ->
             if response.status_code != 429:
                 break
         except RequestException as exc:
-            print("arXiv request failed for '{}': {}".format(term, exc))
+            print("arXiv request failed for '{}': {}".format(search_query, exc))
             response = None
         if attempt < 2:
             time.sleep(10 * (attempt + 1))
     if response is None:
         return []
     if response.status_code == 429:
-        print("arXiv rate-limited term '{}'; skipping.".format(term))
+        print("arXiv rate-limited query '{}'; skipping.".format(search_query))
         return []
     response.raise_for_status()
 
@@ -79,21 +79,6 @@ def fetch_arxiv_term(term: str, track: str, max_results: int, days_back: int) ->
     return items
 
 
-def fetch_arxiv_papers(terms: List[str], track: str, max_results: int = 40, days_back: int = 10) -> List[RawItem]:
-    per_term = max(6, min(12, max_results // max(1, len(terms)) + 3))
-    items: List[RawItem] = []
-    seen = set()
-
-    for index, term in enumerate(terms):
-        if index:
-            time.sleep(3)
-        for item in fetch_arxiv_term(term, track=track, max_results=per_term, days_back=days_back):
-            key = item.url or item.title.lower()
-            if key in seen:
-                continue
-            seen.add(key)
-            items.append(item)
-            if len(items) >= max_results:
-                return items
-
-    return items
+def fetch_arxiv_papers(terms: List[str], track: str, max_results: int = 50, days_back: int = 10, arxiv_query: str = None) -> List[RawItem]:
+    search_query = arxiv_query or " OR ".join(build_query(term) for term in terms)
+    return fetch_arxiv_query(search_query, track=track, max_results=max_results, days_back=days_back)
