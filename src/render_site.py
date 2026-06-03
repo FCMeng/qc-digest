@@ -1,6 +1,8 @@
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional
+from zoneinfo import ZoneInfo
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -8,6 +10,7 @@ from models import DigestItem, utc_now
 
 
 VISIBLE_ARCHIVE_LIMIT = 30
+DISPLAY_TZ = ZoneInfo("America/New_York")
 ROOT = Path(__file__).resolve().parents[1]
 SITE_DIR = ROOT / "site"
 ARCHIVE_DIR = SITE_DIR / "archive"
@@ -64,16 +67,35 @@ def load_archive_items(slug: str) -> Optional[List[DigestItem]]:
     return [DigestItem.from_llm(item) for item in items]
 
 
-def archive_display_fields(generated_at) -> Dict[str, str]:
+def as_display_time(value: datetime) -> datetime:
+    return value.astimezone(DISPLAY_TZ)
+
+
+def parse_datetime(value: str) -> Optional[datetime]:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def archive_display_fields(generated_at: datetime) -> Dict[str, str]:
+    display_time = as_display_time(generated_at)
     return {
-        "title": generated_at.strftime("%Y-%m-%d %H:%M UTC"),
-        "display_time": generated_at.strftime("%H:%M UTC"),
-        "display_date": generated_at.strftime("%Y-%m-%d"),
+        "title": display_time.strftime("%Y-%m-%d %H:%M %Z"),
+        "display_time": display_time.strftime("%H:%M %Z"),
+        "display_date": display_time.strftime("%Y-%m-%d"),
     }
 
 
 def normalize_archive(entry: Dict[str, str]) -> Dict[str, str]:
     normalized = dict(entry)
+    generated_at = parse_datetime(str(normalized.get("generated_at", "")))
+    if generated_at:
+        normalized.update(archive_display_fields(generated_at))
+        return normalized
+
     title = normalized.get("title", "")
     if not normalized.get("display_time"):
         parts = title.split()
@@ -128,8 +150,8 @@ def render_site(items: Iterable[DigestItem]) -> Path:
     digest_items: List[DigestItem] = list(items)
     generated_at = utc_now()
     slug = generated_at.strftime("%Y-%m-%d-%H%M")
-    generated_label = generated_at.strftime("%Y-%m-%d %H:%M UTC")
     archive_fields = archive_display_fields(generated_at)
+    generated_label = archive_fields["title"]
 
     env = Environment(
         loader=FileSystemLoader(str(TEMPLATE_DIR)),

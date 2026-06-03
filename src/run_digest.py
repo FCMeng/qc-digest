@@ -1,12 +1,12 @@
 import os
-from typing import List
+from typing import List, Set, Tuple
 
-from analyze_items import analyze_items
+from analyze_items import analyze_items, canonical_url, normalize_title
 from email_digest import missing_smtp_env, send_digest_email
 from fetch_arxiv import fetch_arxiv_papers
 from fetch_news import fetch_news
 from models import RawItem
-from render_site import PAGES_URL, render_site
+from render_site import PAGES_URL, load_archive_items, load_archives, render_site
 
 
 def is_github_actions() -> bool:
@@ -38,6 +38,42 @@ def fetch_window_days() -> int:
     return int(os.environ.get("FIRST_RUN_DAYS_BACK", "10"))
 
 
+def seen_archive_keys() -> Set[Tuple[str, str]]:
+    keys: Set[Tuple[str, str]] = set()
+    for archive in load_archives():
+        slug = archive.get("slug")
+        if not slug:
+            continue
+        items = load_archive_items(slug) or []
+        for item in items:
+            if item.url:
+                keys.add(("url", canonical_url(item.url)))
+            if item.title:
+                keys.add(("title", normalize_title(item.title)))
+    return keys
+
+
+def filter_previous_results(items: List[RawItem]) -> List[RawItem]:
+    seen = seen_archive_keys()
+    if not seen:
+        return items
+
+    filtered: List[RawItem] = []
+    skipped = 0
+    for item in items:
+        item_keys = {
+            ("url", canonical_url(item.url)),
+            ("title", normalize_title(item.title)),
+        }
+        if item_keys & seen:
+            skipped += 1
+            continue
+        filtered.append(item)
+
+    print("Skipped {} candidate(s) already shown in previous runs.".format(skipped))
+    return filtered
+
+
 def main() -> None:
     days_back = fetch_window_days()
     if has_previous_runs():
@@ -53,8 +89,9 @@ def main() -> None:
     news: List[RawItem] = fetch_news(days_back=days_back)
     print("Fetched {} news candidates.".format(len(news)))
 
+    candidates = filter_previous_results(papers + news)
     print("Analyzing, classifying, ranking, and summarizing with LLM...")
-    digest_items = analyze_items(papers + news, limit=10)
+    digest_items = analyze_items(candidates, limit=10) if candidates else []
     print("Selected {} digest items.".format(len(digest_items)))
 
     html_path = render_site(digest_items)

@@ -17,6 +17,8 @@ https://fcmeng.github.io/qc-digest/
 - Uses the LLM to filter, rank, and summarize the best items.
 - Publishes the current run to `site/index.html`.
 - Stores previous runs under `site/archive/<run-date>/` and regenerates all archive pages with the latest sidebar.
+- Displays pipeline run times in Eastern Time (`EST`/`EDT`).
+- Skips papers or news that were already selected in a previous run.
 - Deploys the site to GitHub Pages, then sends an SMTP email with the Pages link and selected titles.
 
 ## Repository Structure
