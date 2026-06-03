@@ -33,7 +33,7 @@ QUANTUM_KEYWORDS = {
 
 
 def google_news_rss_url(query: str) -> str:
-    encoded = quote_plus("{} when:10d".format(query))
+    encoded = quote_plus(query)
     return "https://news.google.com/rss/search?q={}&hl=en-US&gl=US&ceid=US:en".format(encoded)
 
 

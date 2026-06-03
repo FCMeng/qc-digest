@@ -34,10 +34,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Restore published archive
+        run: python scripts/restore_pages_archive.py
+
       - name: Build digest
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-5-mini' }}
+          DIGEST_INTERVAL_DAYS: "3"
           SKIP_EMAIL: "true"
         run: python src/run_digest.py
 

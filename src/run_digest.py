@@ -17,13 +17,40 @@ def should_skip_email() -> bool:
     return os.environ.get("SKIP_EMAIL", "").lower() in {"1", "true", "yes"}
 
 
+def digest_interval_days() -> int:
+    raw_value = os.environ.get("DIGEST_INTERVAL_DAYS", "3")
+    try:
+        value = int(raw_value)
+    except ValueError:
+        raise RuntimeError("DIGEST_INTERVAL_DAYS must be an integer.")
+    if value < 1:
+        raise RuntimeError("DIGEST_INTERVAL_DAYS must be at least 1.")
+    return value
+
+
+def has_previous_runs() -> bool:
+    return os.path.exists(os.path.join("site", "archive", "index.json"))
+
+
+def fetch_window_days() -> int:
+    if has_previous_runs():
+        return digest_interval_days()
+    return int(os.environ.get("FIRST_RUN_DAYS_BACK", "10"))
+
+
 def main() -> None:
+    days_back = fetch_window_days()
+    if has_previous_runs():
+        print("Previous archive found. Fetching items from the last {} day(s).".format(days_back))
+    else:
+        print("No previous archive found. Fetching items from the last {} day(s).".format(days_back))
+
     print("Fetching recent arXiv papers...")
-    papers: List[RawItem] = fetch_arxiv_papers()
+    papers: List[RawItem] = fetch_arxiv_papers(days_back=days_back)
     print("Fetched {} arXiv candidates.".format(len(papers)))
 
     print("Fetching recent news...")
-    news: List[RawItem] = fetch_news()
+    news: List[RawItem] = fetch_news(days_back=days_back)
     print("Fetched {} news candidates.".format(len(news)))
 
     print("Analyzing, classifying, ranking, and summarizing with LLM...")

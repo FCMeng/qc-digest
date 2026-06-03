@@ -15,7 +15,8 @@ https://fcmeng.github.io/qc-digest/
 - Fetches recent news from public Google News RSS search feeds.
 - Uses an OpenAI LLM to classify candidates as `papers` or `news`.
 - Uses the LLM to filter, rank, and summarize the best items.
-- Publishes `site/index.html` to GitHub Pages.
+- Publishes the current run to `site/index.html`.
+- Stores previous runs under `site/archive/<run-date>/` and links them in a sidebar.
 - Deploys the site to GitHub Pages, then sends an SMTP email with the Pages link and selected titles.
 
 ## Repository Structure
@@ -29,6 +30,7 @@ src/analyze_items.py          deduplication, LLM classification, ranking
 src/render_site.py            static GitHub Pages renderer
 src/email_digest.py           SMTP email sender
 src/run_digest.py             end-to-end pipeline entry point
+scripts/restore_pages_archive.py restores prior published archives before a new deploy
 templates/index.html.j2       HTML template
 site/.gitkeep                 Pages output directory placeholder
 requirements.txt              Python dependencies
@@ -130,6 +132,8 @@ python src/run_digest.py
 ```
 
 If SMTP environment variables are missing locally, the script still generates `site/index.html` and skips email. In GitHub Actions, the workflow deploys Pages first and then sends email; missing SMTP secrets cause the email step to fail.
+
+For first runs, the pipeline fetches the previous 10 days by default. Once an archive exists, it fetches only `DIGEST_INTERVAL_DAYS`; the workflow sets this to `3`, matching the 3-day schedule. For a 2-day schedule, set `DIGEST_INTERVAL_DAYS=2`.
 
 ## Manual Workflow Run
 

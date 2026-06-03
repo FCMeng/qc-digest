@@ -28,7 +28,7 @@
         background: var(--paper);
       }
       .wrap {
-        width: min(1040px, calc(100% - 32px));
+        width: min(1180px, calc(100% - 32px));
         margin: 0 auto;
       }
       .mast {
@@ -46,10 +46,50 @@
         margin: 0;
         font-size: 0.98rem;
       }
-      main {
+      .page {
+        display: grid;
+        grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+        gap: 24px;
         padding: 28px 0 48px;
       }
+      aside {
+        align-self: start;
+        position: sticky;
+        top: 16px;
+      }
+      nav {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 14px;
+      }
+      nav h2 {
+        margin-bottom: 10px;
+      }
+      .archive-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 6px;
+      }
+      .archive-list a {
+        display: block;
+        border-radius: 6px;
+        padding: 8px 10px;
+        color: var(--ink);
+        text-decoration: none;
+        font-weight: 650;
+      }
+      .archive-list a:hover,
+      .archive-list a.active {
+        background: #e7efec;
+        color: var(--accent);
+      }
       section {
+        margin-top: 0;
+      }
+      section + section {
         margin-top: 30px;
       }
       h2 {
@@ -117,6 +157,17 @@
         padding: 24px 0;
         font-size: 0.9rem;
       }
+      @media (max-width: 760px) {
+        .page {
+          grid-template-columns: 1fr;
+        }
+        aside {
+          position: static;
+        }
+        .archive-list {
+          grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+        }
+      }
     </style>
   </head>
   <body>
@@ -127,54 +178,73 @@
       </div>
     </header>
 
-    <main class="wrap">
-      <section>
-        <h2>Papers</h2>
-        {% if grouped.papers %}
-        <div class="grid">
-          {% for item in grouped.papers %}
-          <article>
-            <div class="item-meta">
-              <span class="tag">Paper</span>
-              <span>{{ item.source }}</span>
-              {% if item.published_date %}<span>{{ item.published_date }}</span>{% endif %}
-              <span>Score {{ "%.1f"|format(item.score) }}</span>
-            </div>
-            <h3>{{ item.title }}</h3>
-            <p>{{ item.summary }}</p>
-            <p><strong>Why selected:</strong> {{ item.why_selected }}</p>
-            <p><a href="{{ item.url }}">Original link</a></p>
-          </article>
-          {% endfor %}
-        </div>
-        {% else %}
-        <p class="empty">No papers selected in this run.</p>
-        {% endif %}
-      </section>
+    <main class="wrap page">
+      <aside>
+        <nav aria-label="Archived pipeline runs">
+          <h2>Runs</h2>
+          {% if archives %}
+          <ul class="archive-list">
+            {% for archive in archives %}
+            <li>
+              <a class="{% if archive.slug == active_archive_slug %}active{% endif %}" href="{{ archive.url }}">{{ archive.title }}</a>
+            </li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <p class="meta">No archived runs yet.</p>
+          {% endif %}
+        </nav>
+      </aside>
 
-      <section>
-        <h2>News</h2>
-        {% if grouped.news %}
-        <div class="grid">
-          {% for item in grouped.news %}
-          <article>
-            <div class="item-meta">
-              <span class="tag news">News</span>
-              <span>{{ item.source }}</span>
-              {% if item.published_date %}<span>{{ item.published_date }}</span>{% endif %}
-              <span>Score {{ "%.1f"|format(item.score) }}</span>
-            </div>
-            <h3>{{ item.title }}</h3>
-            <p>{{ item.summary }}</p>
-            <p><strong>Why selected:</strong> {{ item.why_selected }}</p>
-            <p><a href="{{ item.url }}">Original link</a></p>
-          </article>
-          {% endfor %}
-        </div>
-        {% else %}
-        <p class="empty">No news selected in this run.</p>
-        {% endif %}
-      </section>
+      <div>
+        <section>
+          <h2>Papers</h2>
+          {% if grouped.papers %}
+          <div class="grid">
+            {% for item in grouped.papers %}
+            <article>
+              <div class="item-meta">
+                <span class="tag">Paper</span>
+                <span>{{ item.source }}</span>
+                {% if item.published_date %}<span>{{ item.published_date }}</span>{% endif %}
+                <span>Score {{ "%.1f"|format(item.score) }}</span>
+              </div>
+              <h3>{{ item.title }}</h3>
+              <p>{{ item.summary }}</p>
+              <p><strong>Why selected:</strong> {{ item.why_selected }}</p>
+              <p><a href="{{ item.url }}">Original link</a></p>
+            </article>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p class="empty">No papers selected in this run.</p>
+          {% endif %}
+        </section>
+
+        <section>
+          <h2>News</h2>
+          {% if grouped.news %}
+          <div class="grid">
+            {% for item in grouped.news %}
+            <article>
+              <div class="item-meta">
+                <span class="tag news">News</span>
+                <span>{{ item.source }}</span>
+                {% if item.published_date %}<span>{{ item.published_date }}</span>{% endif %}
+                <span>Score {{ "%.1f"|format(item.score) }}</span>
+              </div>
+              <h3>{{ item.title }}</h3>
+              <p>{{ item.summary }}</p>
+              <p><strong>Why selected:</strong> {{ item.why_selected }}</p>
+              <p><a href="{{ item.url }}">Original link</a></p>
+            </article>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p class="empty">No news selected in this run.</p>
+          {% endif %}
+        </section>
+      </div>
     </main>
 
     <footer>
