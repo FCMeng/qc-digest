@@ -10,28 +10,6 @@ from dateutil import parser as date_parser
 from models import RawItem, as_utc, utc_now
 
 
-DEFAULT_NEWS_QUERIES = [
-    "quantum computing",
-    "quantum computer",
-    "quantum chip",
-    "quantum processor",
-    "quantum algorithm",
-    "quantum cryptography",
-]
-
-QUANTUM_KEYWORDS = {
-    "quantum",
-    "qubit",
-    "qpu",
-    "superconducting",
-    "trapped ion",
-    "quantum computer",
-    "quantum computing",
-    "quantum algorithm",
-    "quantum error correction",
-}
-
-
 def google_news_rss_url(query: str) -> str:
     encoded = quote_plus(query)
     return "https://news.google.com/rss/search?q={}&hl=en-US&gl=US&ceid=US:en".format(encoded)
@@ -47,16 +25,16 @@ def clean_html(value: str) -> str:
     return " ".join(soup.get_text(" ").split())
 
 
-def looks_quantum_related(text: str) -> bool:
+def looks_related(text: str, keywords: Iterable[str]) -> bool:
     lowered = text.lower()
-    return any(keyword in lowered for keyword in QUANTUM_KEYWORDS)
+    return any(keyword.lower() in lowered for keyword in keywords)
 
 
-def fetch_news(max_per_query: int = 12, days_back: int = 10, queries: Iterable[str] = None) -> List[RawItem]:
+def fetch_news(queries: Iterable[str], keywords: Iterable[str], track: str, max_per_query: int = 12, days_back: int = 10) -> List[RawItem]:
     cutoff = utc_now() - timedelta(days=days_back)
     items: List[RawItem] = []
 
-    for query in queries or DEFAULT_NEWS_QUERIES:
+    for query in queries:
         for feed_url in [bing_news_rss_url(query), google_news_rss_url(query)]:
             response = requests.get(feed_url, timeout=30)
             response.raise_for_status()
@@ -77,7 +55,7 @@ def fetch_news(max_per_query: int = 12, days_back: int = 10, queries: Iterable[s
                     source = entry.source.title
 
                 combined = "{} {}".format(title, summary)
-                if not looks_quantum_related(combined):
+                if not looks_related(combined, keywords):
                     continue
 
                 items.append(
@@ -88,6 +66,7 @@ def fetch_news(max_per_query: int = 12, days_back: int = 10, queries: Iterable[s
                         published=published,
                         raw_text=summary,
                         source_type="news",
+                        track=track,
                     )
                 )
 

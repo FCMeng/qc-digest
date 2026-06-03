@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  actions: write
   pages: write
   id-token: write
 
@@ -34,7 +35,15 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Delete existing workflow runs
+        if: ${{ vars.RESET_PUBLISHED_ARCHIVE == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python scripts/delete_workflow_runs.py
+
       - name: Restore published archive
+        env:
+          RESET_PUBLISHED_ARCHIVE: ${{ vars.RESET_PUBLISHED_ARCHIVE || 'false' }}
         run: python scripts/restore_pages_archive.py
 
       - name: Build digest

@@ -60,6 +60,11 @@ Selected items:
 def load_items_from_site() -> list:
     digest_path = Path(__file__).resolve().parents[1] / "site" / "digest.json"
     data = json.loads(digest_path.read_text(encoding="utf-8"))
+    if isinstance(data.get("tracks"), dict):
+        items = []
+        for track, track_items in data["tracks"].items():
+            items.extend(DigestItem.from_llm(item, default_track=track) for item in track_items)
+        return items
     return [DigestItem.from_llm(item) for item in data.get("items", [])]
 
 

@@ -14,22 +14,13 @@ ARXIV_API = "https://export.arxiv.org/api/query"
 REQUEST_HEADERS = {
     "User-Agent": "FCMeng-qc-digest/1.0 (https://github.com/FCMeng/qc-digest)"
 }
-DEFAULT_QUERY_TERMS = [
-    "quantum computing",
-    "quantum information",
-    "quantum algorithms",
-    "quantum error correction",
-    "quantum machine learning",
-]
-
-
 def build_query(terms: List[str]) -> str:
     return " OR ".join('all:"{}"'.format(term) for term in terms)
 
 
-def fetch_arxiv_papers(max_results: int = 30, days_back: int = 10) -> List[RawItem]:
+def fetch_arxiv_papers(terms: List[str], track: str, max_results: int = 40, days_back: int = 10) -> List[RawItem]:
     params = {
-        "search_query": build_query(DEFAULT_QUERY_TERMS),
+        "search_query": build_query(terms),
         "start": 0,
         "max_results": max_results,
         "sortBy": "submittedDate",
@@ -70,6 +61,7 @@ def fetch_arxiv_papers(max_results: int = 30, days_back: int = 10) -> List[RawIt
                 published=published,
                 raw_text=summary,
                 source_type="arxiv",
+                track=track,
                 authors=authors,
             )
         )

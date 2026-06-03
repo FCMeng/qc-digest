@@ -1,0 +1,101 @@
+TRACKS = {
+    "quantum": {
+        "label": "Quantum",
+        "task": "Analyze recent quantum computing papers and news.",
+        "expert_role": "quantum computing research and technology analyst",
+        "paper_terms": [
+            "quantum machine learning",
+            "quantum circuit design",
+            "quantum algorithm design",
+            "quantum chemistry simulation",
+            "quantum simulation",
+            "quantum hardware devices",
+            "quantum information theory",
+        ],
+        "news_queries": [
+            "quantum computing",
+            "quantum information",
+            "quantum computer",
+            "quantum hardware",
+            "quantum algorithm",
+            "quantum chip",
+        ],
+        "keywords": [
+            "quantum",
+            "qubit",
+            "qpu",
+            "quantum computer",
+            "quantum computing",
+            "quantum information",
+            "quantum algorithm",
+            "quantum circuit",
+            "quantum chemistry",
+            "quantum simulation",
+        ],
+        "categories": [
+            "Quantum machine learning",
+            "Quantum circuit design",
+            "Quantum algorithm design",
+            "Quantum chemistry and simulation",
+            "Quantum hardware and devices",
+            "Quantum information theory",
+        ],
+    },
+    "ai_ml": {
+        "label": "AI/ML",
+        "task": "Analyze recent artificial intelligence and machine learning papers and news.",
+        "expert_role": "artificial intelligence and machine learning research analyst",
+        "paper_terms": [
+            "machine learning",
+            "deep learning",
+            "generative AI",
+            "large language model",
+            "computer vision",
+            "natural language processing",
+            "reinforcement learning",
+            "robotics artificial intelligence",
+            "trustworthy AI",
+            "AI systems",
+        ],
+        "news_queries": [
+            "artificial intelligence",
+            "machine learning",
+            "generative AI",
+            "large language models",
+            "AI research",
+            "AI chips",
+        ],
+        "keywords": [
+            "artificial intelligence",
+            "machine learning",
+            "deep learning",
+            "generative ai",
+            "large language model",
+            "llm",
+            "computer vision",
+            "natural language processing",
+            "reinforcement learning",
+            "robotics",
+            "ai system",
+        ],
+        "categories": [
+            "ML theory",
+            "Deep learning",
+            "Generative AI",
+            "Computer vision",
+            "NLP",
+            "Reinforcement learning",
+            "Robotics",
+            "AI systems",
+            "Trustworthy AI",
+            "AI applications",
+        ],
+    },
+}
+
+
+TRACK_ORDER = ["quantum", "ai_ml"]
+
+
+def get_track(track: str) -> dict:
+    return TRACKS[track]

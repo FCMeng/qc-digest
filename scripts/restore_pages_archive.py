@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
@@ -69,15 +70,20 @@ def parse_archived_html(page_text: str, entry: dict) -> dict:
             }
         )
 
+    item_tracks = {"quantum": items, "ai_ml": []}
     return {
         "generated_at": entry.get("generated_at"),
         "pages_url": PAGES_URL,
         "archive_url": entry.get("url"),
-        "items": items,
+        "tracks": item_tracks,
     }
 
 
 def restore_archive() -> None:
+    if os.environ.get("RESET_PUBLISHED_ARCHIVE", "").lower() in {"1", "true", "yes"}:
+        print("Archive reset requested; skipping published archive restore.")
+        return
+
     ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
     try:
         index_text = fetch_text(PAGES_URL + "archive/index.json")

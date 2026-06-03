@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Quantum Computing Digest</title>
+    <title>Research Digest</title>
     <style>
       :root {
         color-scheme: light;
@@ -46,6 +46,44 @@
         margin: 0;
         font-size: 0.98rem;
       }
+      .tabs {
+        display: grid;
+        gap: 18px;
+      }
+      .tab-options {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        width: fit-content;
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 4px;
+      }
+      .tab-options label {
+        cursor: pointer;
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-weight: 750;
+        color: var(--muted);
+      }
+      input[name="track-tab"] {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .track-panel {
+        display: none;
+      }
+      {% for section in track_sections %}
+      #tab-{{ section.key }}:checked ~ .tab-options label[for="tab-{{ section.key }}"] {
+        background: #e7efec;
+        color: var(--accent);
+      }
+      #tab-{{ section.key }}:checked ~ .panel-{{ section.key }} {
+        display: block;
+      }
+      {% endfor %}
       .page {
         display: grid;
         grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
@@ -161,6 +199,14 @@
       .tag.news {
         background: var(--accent-2);
       }
+      .category {
+        color: var(--accent);
+        border: 1px solid #8ac2bb;
+        border-radius: 999px;
+        padding: 2px 8px;
+        font-size: 0.76rem;
+        font-weight: 750;
+      }
       a {
         color: var(--accent);
         font-weight: 650;
@@ -195,8 +241,8 @@
   <body>
     <header>
       <div class="wrap mast">
-        <h1>Quantum Computing Digest</h1>
-        <p class="meta">Generated {{ generated_at }}. Top {{ items|length }} LLM-selected papers and news items.</p>
+        <h1>Research Digest</h1>
+        <p class="meta">Generated {{ generated_at }}. Top {{ item_count }} LLM-selected papers and news items.</p>
       </div>
     </header>
 
@@ -241,51 +287,67 @@
       </aside>
 
       <div>
-        <section>
-          <h2>Papers</h2>
-          {% if grouped.papers %}
-          <div class="grid">
-            {% for item in grouped.papers %}
-            <article>
-              <div class="item-meta">
-                <span class="tag">Paper</span>
-                <span>{{ item.source }}</span>
-                {% if item.published_date %}<span>{{ item.published_date }}</span>{% endif %}
-              </div>
-              <h3>{{ item.title }}</h3>
-              <p>{{ item.summary }}</p>
-              <p><strong>Why selected:</strong> {{ item.why_selected }}</p>
-              <p><a href="{{ item.url }}">Original link</a></p>
-            </article>
+        <div class="tabs">
+          {% for section in track_sections %}
+          <input id="tab-{{ section.key }}" type="radio" name="track-tab" {% if loop.first %}checked{% endif %}>
+          {% endfor %}
+          <div class="tab-options">
+            {% for section in track_sections %}
+            <label for="tab-{{ section.key }}">{{ section.label }}</label>
             {% endfor %}
           </div>
-          {% else %}
-          <p class="empty">No papers selected in this run.</p>
-          {% endif %}
-        </section>
 
-        <section>
-          <h2>News</h2>
-          {% if grouped.news %}
-          <div class="grid">
-            {% for item in grouped.news %}
-            <article>
-              <div class="item-meta">
-                <span class="tag news">News</span>
-                <span>{{ item.source }}</span>
-                {% if item.published_date %}<span>{{ item.published_date }}</span>{% endif %}
+          {% for section in track_sections %}
+          <div class="track-panel panel-{{ section.key }}">
+            <section>
+              <h2>Papers</h2>
+              {% if section.grouped.papers %}
+              <div class="grid">
+                {% for item in section.grouped.papers %}
+                <article>
+                  <div class="item-meta">
+                    <span class="tag">Paper</span>
+                    {% if item.category %}<span class="category">{{ item.category }}</span>{% endif %}
+                    <span>{{ item.source }}</span>
+                    {% if item.published_date %}<span>{{ item.published_date }}</span>{% endif %}
+                  </div>
+                  <h3>{{ item.title }}</h3>
+                  <p>{{ item.summary }}</p>
+                  <p><strong>Why selected:</strong> {{ item.why_selected }}</p>
+                  <p><a href="{{ item.url }}">Original link</a></p>
+                </article>
+                {% endfor %}
               </div>
-              <h3>{{ item.title }}</h3>
-              <p>{{ item.summary }}</p>
-              <p><strong>Why selected:</strong> {{ item.why_selected }}</p>
-              <p><a href="{{ item.url }}">Original link</a></p>
-            </article>
-            {% endfor %}
+              {% else %}
+              <p class="empty">No papers selected in this run.</p>
+              {% endif %}
+            </section>
+
+            <section>
+              <h2>News</h2>
+              {% if section.grouped.news %}
+              <div class="grid">
+                {% for item in section.grouped.news %}
+                <article>
+                  <div class="item-meta">
+                    <span class="tag news">News</span>
+                    <span>{{ item.source }}</span>
+                    {% if item.published_date %}<span>{{ item.published_date }}</span>{% endif %}
+                  </div>
+                  <h3>{{ item.title }}</h3>
+                  <p>{{ item.summary }}</p>
+                  <p><strong>Why selected:</strong> {{ item.why_selected }}</p>
+                  <p><a href="{{ item.url }}">Original link</a></p>
+                </article>
+                {% endfor %}
+              </div>
+              {% else %}
+              <p class="empty">No news selected in this run.</p>
+              {% endif %}
+            </section>
           </div>
-          {% else %}
-          <p class="empty">No news selected in this run.</p>
-          {% endif %}
-        </section>
+          {% endfor %}
+        </div>
       </div>
     </main>
 

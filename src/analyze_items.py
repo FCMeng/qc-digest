@@ -72,13 +72,14 @@ def deduplicate_digest(items: Iterable[DigestItem]) -> List[DigestItem]:
     return result
 
 
-def analyze_items(raw_items: List[RawItem], limit: int = 10) -> List[DigestItem]:
+def analyze_items(raw_items: List[RawItem], track_config: Dict[str, object], track: str, limit: int = 10) -> List[DigestItem]:
     candidates = pre_rank(deduplicate_raw(raw_items))
     prompt_items = [item.to_prompt_dict(index) for index, item in enumerate(candidates)]
 
     llm = LLMClient()
-    data: Dict[str, object] = llm.analyze_batch(prompt_items, limit=limit)
-    digest_items = [DigestItem.from_llm(item) for item in data.get("items", [])]
+    data: Dict[str, object] = llm.analyze_batch(prompt_items, limit=limit, track_config=track_config, track=track)
+    digest_items = [DigestItem.from_llm(item, default_track=track) for item in data.get("items", [])]
+    digest_items = [item for item in digest_items if item.track == track]
     digest_items = deduplicate_digest(digest_items)
     digest_items.sort(key=lambda item: item.score, reverse=True)
     return digest_items[:limit]

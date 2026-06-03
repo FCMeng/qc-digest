@@ -15,23 +15,27 @@ class LLMClient:
         self.client = OpenAI()
         self.model = model or os.environ.get("OPENAI_MODEL", DEFAULT_MODEL)
 
-    def analyze_batch(self, candidates: List[Dict[str, Any]], limit: int) -> Dict[str, Any]:
+    def analyze_batch(self, candidates: List[Dict[str, Any]], limit: int, track_config: Dict[str, Any], track: str) -> Dict[str, Any]:
         system_prompt = (
-            "You are an expert quantum computing research and technology analyst. "
+            "You are an expert {}. ".format(track_config["expert_role"]) +
             "Classify candidate items as papers or news, reject irrelevant or duplicate items, "
-            "rank by importance to a quantum-computing researcher, and summarize accurately. "
+            "rank by importance to a research-oriented reader, categorize papers, and summarize accurately. "
             "Return only JSON that matches the requested schema."
         )
         user_prompt = {
-            "task": "Analyze recent quantum computing papers and news.",
+            "task": track_config["task"],
             "instructions": [
-                "Only include items genuinely related to quantum computing, quantum information, quantum hardware, quantum algorithms, quantum error correction, or quantum cryptography.",
+                "Only include items genuinely related to this track.",
                 "Classify arXiv/manuscript items as papers and journalism/company/government/reporting items as news.",
+                "For every paper, choose exactly one category from the allowed paper categories.",
+                "For news, use category null.",
                 "Prefer recent, technically meaningful, or high-impact items.",
                 "Write each summary in 2-3 concise sentences.",
                 "Use the original URL from the candidate item.",
                 "Return at most {} selected items.".format(limit),
             ],
+            "track": track,
+            "allowed_paper_categories": track_config["categories"],
             "candidates": candidates,
         }
 
@@ -57,7 +61,9 @@ class LLMClient:
                                     "additionalProperties": False,
                                     "properties": {
                                         "title": {"type": "string"},
+                                        "track": {"type": "string", "enum": ["quantum", "ai_ml"]},
                                         "kind": {"type": "string", "enum": ["papers", "news"]},
+                                        "category": {"type": ["string", "null"]},
                                         "source": {"type": "string"},
                                         "published_date": {"type": ["string", "null"]},
                                         "url": {"type": "string"},
@@ -67,7 +73,9 @@ class LLMClient:
                                     },
                                     "required": [
                                         "title",
+                                        "track",
                                         "kind",
+                                        "category",
                                         "source",
                                         "published_date",
                                         "url",
