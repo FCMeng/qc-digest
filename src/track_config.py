@@ -95,10 +95,14 @@ TRACKS = {
             "AI applications",
         ],
     },
+    "opportunities": {
+        "label": "Opportunities",
+    },
 }
 
 
-TRACK_ORDER = ["quantum", "ai_ml"]
+DIGEST_TRACK_ORDER = ["quantum", "ai_ml"]
+TRACK_ORDER = ["quantum", "ai_ml", "opportunities"]
 
 
 def get_track(track: str) -> dict:

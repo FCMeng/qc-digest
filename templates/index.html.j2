@@ -247,7 +247,7 @@
     <header>
       <div class="wrap mast">
         <h1>Research Digest</h1>
-        <p class="meta">Generated {{ generated_at }}. Top {{ item_count }} LLM-selected papers and news items.</p>
+        <p class="meta">Generated {{ generated_at }}. Current digest includes {{ item_count }} selected items.</p>
       </div>
     </header>
 
@@ -304,6 +304,30 @@
 
           {% for section in track_sections %}
           <div class="track-panel panel-{{ section.key }}">
+            {% if section.key == 'opportunities' %}
+            <section>
+              <h2>Opportunities</h2>
+              {% if section.opportunities %}
+              <div class="grid">
+                {% for item in section.opportunities %}
+                <article>
+                  <div class="item-meta">
+                    <span class="tag">{{ item.topic_tag }}</span>
+                    <span class="category">{{ item.event_tag }}</span>
+                    {% if item.deadline %}<span class="category">Deadline {{ item.deadline }}</span>{% endif %}
+                  </div>
+                  <h3>{{ item.title }}</h3>
+                  <p>{{ item.summary }}</p>
+                  {% if item.event_date %}<p><strong>Event date:</strong> {{ item.event_date }}</p>{% endif %}
+                  <p><a href="{{ item.url }}">Original link</a></p>
+                </article>
+                {% endfor %}
+              </div>
+              {% else %}
+              <p class="empty">No opportunities selected in this run.</p>
+              {% endif %}
+            </section>
+            {% else %}
             <section>
               <h2>Papers</h2>
               {% if section.grouped.papers %}
@@ -346,6 +370,7 @@
               <p class="empty">No news selected in this run.</p>
               {% endif %}
             </section>
+            {% endif %}
           </div>
           {% endfor %}
         </div>

@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from models import DigestItem, utc_now
+from models import DigestItem, OpportunityItem, utc_now
 from track_config import TRACKS, TRACK_ORDER
 
 
@@ -41,7 +41,7 @@ def write_archive_index(archives: List[Dict[str, str]]) -> None:
     )
 
 
-def digest_payload(generated_at: str, pages_url: str, archive_url: str, tracks: Dict[str, List[DigestItem]]) -> Dict:
+def digest_payload(generated_at: str, pages_url: str, archive_url: str, tracks: Dict[str, List]) -> Dict:
     return {
         "generated_at": generated_at,
         "pages_url": pages_url,
@@ -67,11 +67,15 @@ def load_archive_tracks(slug: str) -> Optional[Dict[str, List[DigestItem]]]:
         return None
     tracks = data.get("tracks")
     if isinstance(tracks, dict):
-        return {
-            track: [DigestItem.from_llm(item, default_track=track) for item in items]
-            for track, items in tracks.items()
-            if isinstance(items, list)
-        }
+        restored = {}
+        for track, items in tracks.items():
+            if not isinstance(items, list):
+                continue
+            if track == "opportunities":
+                restored[track] = [OpportunityItem.from_llm(item) for item in items]
+            else:
+                restored[track] = [DigestItem.from_llm(item, default_track=track) for item in items]
+        return restored
 
     legacy_items = data.get("items", [])
     if isinstance(legacy_items, list):
@@ -142,15 +146,20 @@ def grouped_items(items: List[DigestItem]) -> Dict[str, List[DigestItem]]:
 
 
 def build_track_sections(tracks: Dict[str, List[DigestItem]]) -> List[Dict[str, object]]:
-    return [
-        {
+    sections = []
+    for track in TRACK_ORDER:
+        items = tracks.get(track, [])
+        section = {
             "key": track,
             "label": TRACKS[track]["label"],
-            "items": tracks.get(track, []),
-            "grouped": grouped_items(tracks.get(track, [])),
+            "items": items,
         }
-        for track in TRACK_ORDER
-    ]
+        if track == "opportunities":
+            section["opportunities"] = items
+        else:
+            section["grouped"] = grouped_items(items)
+        sections.append(section)
+    return sections
 
 
 def render_digest_page(template, path: Path, tracks: Dict[str, List[DigestItem]], generated_label: str, archives: List[Dict[str, str]], active_slug: str) -> None:
@@ -188,8 +197,8 @@ def render_all_archive_pages(template, archives: List[Dict[str, str]]) -> None:
         )
 
 
-def render_site(tracks: Dict[str, Iterable[DigestItem]]) -> Path:
-    digest_tracks: Dict[str, List[DigestItem]] = {
+def render_site(tracks: Dict[str, Iterable]) -> Path:
+    digest_tracks: Dict[str, List] = {
         track: list(tracks.get(track, []))
         for track in TRACK_ORDER
     }

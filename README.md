@@ -1,6 +1,6 @@
-# Quantum Computing Digest
+# Research Digest
 
-Automated GitHub Actions pipeline for user `FCMeng` that fetches recent quantum computing papers and news, analyzes them with an OpenAI LLM, publishes the top 10 items to GitHub Pages, and emails the Pages link.
+Automated GitHub Actions pipeline for user `FCMeng` that fetches recent quantum computing and AI/ML papers/news, gathers relevant research opportunities, analyzes everything with an OpenAI LLM, publishes the results to GitHub Pages, and emails the Pages link.
 
 Published site:
 
@@ -11,15 +11,19 @@ https://fcmeng.github.io/qc-digest/
 ## What It Does
 
 - Runs on Monday, Wednesday, and Friday via GitHub Actions.
-- Fetches recent arXiv papers related to quantum computing.
+- Fetches recent arXiv papers related to quantum computing and AI/ML.
 - Fetches recent news from public Google News RSS search feeds.
+- Fetches curated public opportunity sources for workshops, conferences, tutorials, and schools.
 - Uses an OpenAI LLM to classify candidates as `papers` or `news`.
-- Uses the LLM to filter, rank, and summarize the best items.
+- Uses the LLM to filter, rank, categorize, and summarize the best paper/news items.
+- Uses the LLM to extract and normalize opportunity metadata.
 - Publishes the current run to `site/index.html`.
 - Stores previous runs under `site/archive/<run-date>/` and regenerates all archive pages with the latest sidebar.
 - Displays pipeline run times in Eastern Time (`EST`/`EDT`).
 - Skips papers or news that were already selected in a previous run.
+- Deduplicates opportunities by canonical URL and normalized title.
 - Deploys the site to GitHub Pages, then sends an SMTP email with the Pages link and selected titles.
+  Email is sent only to `fanchem@g.clemson.edu` and `zhenzhz@g.clemson.edu`.
 
 ## Repository Structure
 
@@ -27,6 +31,8 @@ https://fcmeng.github.io/qc-digest/
 .github/workflows/digest.yml  GitHub Actions workflow
 src/fetch_arxiv.py            arXiv Atom API fetcher
 src/fetch_news.py             RSS news fetcher
+src/fetch_opportunities.py    opportunity source fetcher and normalizer
+src/opportunity_sources.py    curated opportunity source list
 src/llm_client.py             OpenAI Responses API wrapper
 src/analyze_items.py          deduplication, LLM classification, ranking
 src/render_site.py            static GitHub Pages renderer
@@ -57,7 +63,6 @@ SMTP_PORT
 SMTP_USERNAME
 SMTP_PASSWORD
 EMAIL_FROM
-EMAIL_TO
 ```
 
 For Gmail SMTP, use a Gmail app password rather than your normal account password:
@@ -68,7 +73,13 @@ SMTP_PORT=587
 SMTP_USERNAME=your-address@gmail.com
 SMTP_PASSWORD=your-gmail-app-password
 EMAIL_FROM=your-address@gmail.com
-EMAIL_TO=destination@example.com
+```
+
+Email recipients are fixed in `src/email_digest.py` as:
+
+```text
+fanchem@g.clemson.edu
+zhenzhz@g.clemson.edu
 ```
 
 ## Optional GitHub Variable
@@ -141,7 +152,7 @@ For first runs, the pipeline fetches the previous 10 days by default. Once an ar
 
 1. Open the repository on GitHub.
 2. Go to `Actions`.
-3. Select `Quantum Computing Digest`.
+3. Select `Research Digest`.
 4. Click `Run workflow`.
 5. After it completes, open the Pages URL and check your email.
 

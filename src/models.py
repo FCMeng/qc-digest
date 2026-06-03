@@ -63,6 +63,36 @@ class DigestItem:
         )
 
 
+@dataclass
+class OpportunityItem:
+    title: str
+    url: str
+    deadline: Optional[str]
+    event_date: Optional[str]
+    topic_tag: str
+    event_tag: str
+    summary: str
+    track: str = "opportunities"
+
+    @classmethod
+    def from_llm(cls, data: Dict[str, Any]) -> "OpportunityItem":
+        topic_tag = str(data.get("topic_tag") or "").strip()
+        if topic_tag not in {"AI/ML", "Quantum"}:
+            topic_tag = "AI/ML"
+        event_tag = str(data.get("event_tag") or "").strip()
+        if event_tag not in {"Workshop", "Conference", "Tutorial", "School"}:
+            event_tag = "Conference"
+        return cls(
+            title=str(data.get("title", "")).strip(),
+            url=str(data.get("url", "")).strip(),
+            deadline=data.get("deadline") or None,
+            event_date=data.get("event_date") or None,
+            topic_tag=topic_tag,
+            event_tag=event_tag,
+            summary=str(data.get("summary", "")).strip(),
+        )
+
+
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
 

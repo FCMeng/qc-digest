@@ -5,9 +5,10 @@ from analyze_items import analyze_items, canonical_url, normalize_title
 from email_digest import missing_smtp_env, send_digest_email
 from fetch_arxiv import fetch_arxiv_papers
 from fetch_news import fetch_news
+from fetch_opportunities import fetch_opportunities
 from models import RawItem
 from render_site import PAGES_URL, load_archive_items, load_archives, render_site
-from track_config import TRACKS, TRACK_ORDER
+from track_config import DIGEST_TRACK_ORDER, TRACKS
 
 
 def is_github_actions() -> bool:
@@ -114,8 +115,11 @@ def main() -> None:
 
     digest_tracks = {
         track: build_track_digest(track, days_back)
-        for track in TRACK_ORDER
+        for track in DIGEST_TRACK_ORDER
     }
+    print("Fetching opportunities...")
+    digest_tracks["opportunities"] = fetch_opportunities()
+    print("Selected {} opportunity item(s).".format(len(digest_tracks["opportunities"])))
 
     html_path = render_site(digest_tracks)
     print("Rendered {}".format(html_path))
@@ -131,7 +135,7 @@ def main() -> None:
         return
 
     print("Sending digest email...")
-    send_digest_email([item for items in digest_tracks.values() for item in items])
+    send_digest_email(digest_tracks)
     print("Email sent.")
 
 

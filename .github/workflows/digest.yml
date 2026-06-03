@@ -1,4 +1,4 @@
-name: Quantum Computing Digest
+name: Research Digest
 
 on:
   schedule:
@@ -93,5 +93,4 @@ jobs:
           SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
-          EMAIL_TO: ${{ secrets.EMAIL_TO }}
         run: python src/email_digest.py

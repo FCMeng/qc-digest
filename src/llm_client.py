@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import date
 from typing import Any, Dict, List
 
 from openai import OpenAI
@@ -83,6 +84,78 @@ class LLMClient:
                                         "score",
                                         "summary",
                                         "why_selected",
+                                    ],
+                                },
+                            }
+                        },
+                        "required": ["items"],
+                    },
+                }
+            },
+        )
+        return json.loads(response.output_text)
+
+    def extract_opportunities(self, sources: List[Dict[str, Any]], max_items: int) -> Dict[str, Any]:
+        system_prompt = (
+            "You extract upcoming AI/ML and quantum computing workshops, conferences, tutorials, "
+            "schools, and application-based opportunities from source text. Return only valid JSON."
+        )
+        user_prompt = {
+            "task": "Extract upcoming opportunities and normalize their metadata.",
+            "current_date": date.today().isoformat(),
+            "instructions": [
+                "Include only opportunities related to AI/ML or quantum computing/information.",
+                "Include workshops, conferences, tutorials, schools, summer schools, or application-based events.",
+                "Use deadline for submission, application, registration, or abstract deadline when available.",
+                "Represent deadline and event_date as ISO YYYY-MM-DD strings when known; otherwise null.",
+                "Exclude expired opportunities if the source text makes it clear they are expired.",
+                "Use the most specific original URL available; if unavailable, use the source URL.",
+                "Deduplicate obvious repeated entries.",
+                "Return at most {} items.".format(max_items),
+            ],
+            "sources": sources,
+        }
+
+        response = self.client.responses.create(
+            model=self.model,
+            input=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": json.dumps(user_prompt)},
+            ],
+            text={
+                "format": {
+                    "type": "json_schema",
+                    "name": "research_opportunities",
+                    "strict": True,
+                    "schema": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "items": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "additionalProperties": False,
+                                    "properties": {
+                                        "title": {"type": "string"},
+                                        "url": {"type": "string"},
+                                        "deadline": {"type": ["string", "null"]},
+                                        "event_date": {"type": ["string", "null"]},
+                                        "topic_tag": {"type": "string", "enum": ["AI/ML", "Quantum"]},
+                                        "event_tag": {
+                                            "type": "string",
+                                            "enum": ["Workshop", "Conference", "Tutorial", "School"],
+                                        },
+                                        "summary": {"type": "string"},
+                                    },
+                                    "required": [
+                                        "title",
+                                        "url",
+                                        "deadline",
+                                        "event_date",
+                                        "topic_tag",
+                                        "event_tag",
+                                        "summary",
                                     ],
                                 },
                             }
