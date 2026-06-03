@@ -74,6 +74,7 @@
       }
       .track-panel {
         display: none;
+        min-width: 0;
       }
       {% for section in track_sections %}
       #tab-{{ section.key }}:checked ~ .tab-options label[for="tab-{{ section.key }}"] {
@@ -81,7 +82,8 @@
         color: var(--accent);
       }
       #tab-{{ section.key }}:checked ~ .panel-{{ section.key }} {
-        display: block;
+        display: grid;
+        gap: 30px;
       }
       {% endfor %}
       .page {
@@ -89,6 +91,9 @@
         grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
         gap: 24px;
         padding: 28px 0 48px;
+      }
+      .content {
+        min-width: 0;
       }
       aside {
         align-self: start;
@@ -149,9 +154,6 @@
       section {
         margin-top: 0;
       }
-      section + section {
-        margin-top: 30px;
-      }
       h2 {
         margin: 0 0 14px;
         font-size: 1rem;
@@ -161,14 +163,17 @@
       }
       .grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
         gap: 14px;
+        min-width: 0;
       }
       article {
         background: var(--paper);
         border: 1px solid var(--line);
         border-radius: 8px;
         padding: 18px;
+        min-width: 0;
+        overflow-wrap: anywhere;
       }
       article h3 {
         margin: 0 0 10px;
@@ -286,7 +291,7 @@
         </nav>
       </aside>
 
-      <div>
+      <div class="content">
         <div class="tabs">
           {% for section in track_sections %}
           <input id="tab-{{ section.key }}" type="radio" name="track-tab" {% if loop.first %}checked{% endif %}>

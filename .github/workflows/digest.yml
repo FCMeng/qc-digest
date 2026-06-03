@@ -2,7 +2,8 @@ name: Quantum Computing Digest
 
 on:
   schedule:
-    - cron: "0 14 */3 * *"
+    - cron: "0 9 * * 1,3,5"
+    - cron: "0 10 * * 1,3,5"
   workflow_dispatch:
 
 permissions:
@@ -26,27 +27,42 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Check Eastern schedule
+        id: eastern_schedule
+        run: |
+          if [ "${{ github.event_name }}" != "schedule" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          elif [ "$(TZ=America/New_York date +%H)" = "05" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Set up Python
+        if: steps.eastern_schedule.outputs.should_run == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
 
       - name: Install dependencies
+        if: steps.eastern_schedule.outputs.should_run == 'true'
         run: pip install -r requirements.txt
 
       - name: Delete existing workflow runs
-        if: ${{ vars.RESET_PUBLISHED_ARCHIVE == 'true' }}
+        if: steps.eastern_schedule.outputs.should_run == 'true' && vars.RESET_PUBLISHED_ARCHIVE == 'true'
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: python scripts/delete_workflow_runs.py
 
       - name: Restore published archive
+        if: steps.eastern_schedule.outputs.should_run == 'true'
         env:
           RESET_PUBLISHED_ARCHIVE: ${{ vars.RESET_PUBLISHED_ARCHIVE || 'false' }}
         run: python scripts/restore_pages_archive.py
 
       - name: Build digest
+        if: steps.eastern_schedule.outputs.should_run == 'true'
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-5-mini' }}
@@ -55,18 +71,22 @@ jobs:
         run: python src/run_digest.py
 
       - name: Configure Pages
+        if: steps.eastern_schedule.outputs.should_run == 'true'
         uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
+        if: steps.eastern_schedule.outputs.should_run == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: site
 
       - name: Deploy to GitHub Pages
+        if: steps.eastern_schedule.outputs.should_run == 'true'
         id: deployment
         uses: actions/deploy-pages@v4
 
       - name: Send email
+        if: steps.eastern_schedule.outputs.should_run == 'true'
         env:
           SMTP_HOST: ${{ secrets.SMTP_HOST }}
           SMTP_PORT: ${{ secrets.SMTP_PORT }}

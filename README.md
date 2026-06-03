@@ -10,7 +10,7 @@ https://fcmeng.github.io/qc-digest/
 
 ## What It Does
 
-- Runs every 3 days via GitHub Actions.
+- Runs on Monday, Wednesday, and Friday via GitHub Actions.
 - Fetches recent arXiv papers related to quantum computing.
 - Fetches recent news from public Google News RSS search feeds.
 - Uses an OpenAI LLM to classify candidates as `papers` or `news`.
@@ -150,10 +150,11 @@ For first runs, the pipeline fetches the previous 10 days by default. Once an ar
 The workflow schedule is:
 
 ```yaml
-0 14 */3 * *
+0 9 * * 1,3,5
+0 10 * * 1,3,5
 ```
 
-This runs at 14:00 UTC every 3 days.
+The workflow triggers at both 09:00 and 10:00 UTC on Monday, Wednesday, and Friday, then checks `America/New_York` time and only builds when the local Eastern hour is 5. Manual `workflow_dispatch` runs still execute immediately.
 
 ## Notes
 

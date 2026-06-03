@@ -7,6 +7,7 @@ from typing import Iterable
 
 from models import DigestItem
 from render_site import PAGES_URL
+from track_config import TRACKS, TRACK_ORDER
 
 
 REQUIRED_SMTP_ENV = [
@@ -28,8 +29,26 @@ def send_digest_email(items: Iterable[DigestItem]) -> None:
     if missing:
         raise RuntimeError("Missing SMTP environment variables: {}".format(", ".join(missing)))
 
-    item_lines = ["- {}".format(item.title) for item in items]
-    body = """A new quantum computing digest is available:
+    grouped = {track: [] for track in TRACK_ORDER}
+    for item in items:
+        grouped.setdefault(item.track, []).append(item)
+
+    sections = []
+    for track in TRACK_ORDER:
+        label = TRACKS[track]["label"]
+        papers = [item for item in grouped.get(track, []) if item.kind == "papers"]
+        news = [item for item in grouped.get(track, []) if item.kind == "news"]
+        paper_lines = ["- {}".format(item.title) for item in papers]
+        news_lines = ["- {}".format(item.title) for item in news]
+        sections.append(
+            "{label}:\nPapers:\n{papers}\n\nNews:\n{news}".format(
+                label=label,
+                papers="\n".join(paper_lines) if paper_lines else "- No papers selected",
+                news="\n".join(news_lines) if news_lines else "- No news selected",
+            )
+        )
+
+    body = """A new research digest is available:
 
 {pages_url}
 
@@ -37,13 +56,18 @@ Selected items:
 {items}
 """.format(
         pages_url=PAGES_URL,
-        items="\n".join(item_lines) if item_lines else "- No items selected",
+        items="\n\n".join(sections),
     )
 
     message = EmailMessage()
-    message["Subject"] = "Quantum Computing Digest"
+    message["Subject"] = "Research Digest"
     message["From"] = os.environ["EMAIL_FROM"]
-    message["To"] = os.environ["EMAIL_TO"]
+    recipients = [
+        address.strip()
+        for address in "{},zhenzhz@clemson.edu".format(os.environ["EMAIL_TO"]).split(",")
+        if address.strip()
+    ]
+    message["To"] = ", ".join(dict.fromkeys(recipients))
     message.set_content(body)
 
     host = os.environ["SMTP_HOST"]
