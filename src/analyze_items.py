@@ -1,6 +1,9 @@
 import re
+from difflib import SequenceMatcher
 from typing import Dict, Iterable, List
 from urllib.parse import urlparse
+
+import requests
 
 from llm_client import LLMClient
 from models import DigestItem, RawItem
@@ -15,6 +18,39 @@ def canonical_url(url: str) -> str:
     if "news.google.com" in parsed.netloc:
         return url
     return parsed._replace(query="", fragment="").geturl().rstrip("/")
+
+
+def is_http_url(url: str) -> bool:
+    parsed = urlparse((url or "").strip())
+    return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
+
+
+def is_google_news_wrapper(url: str) -> bool:
+    parsed = urlparse((url or "").strip())
+    return parsed.netloc.endswith("news.google.com") and "/rss/articles/" in parsed.path
+
+
+def can_publish_url(url: str, allow_google_news_wrapper: bool = False) -> bool:
+    if not is_http_url(url):
+        return False
+    if not allow_google_news_wrapper and is_google_news_wrapper(url):
+        return False
+    return True
+
+
+def url_appears_live(url: str, allow_google_news_wrapper: bool = False, timeout: int = 12) -> bool:
+    if not can_publish_url(url, allow_google_news_wrapper=allow_google_news_wrapper):
+        return False
+    headers = {"User-Agent": "Mozilla/5.0 (compatible; FCMeng-qc-digest/1.0)"}
+    try:
+        response = requests.head(url, timeout=timeout, allow_redirects=True, headers=headers)
+        if response.status_code in {405, 403, 429}:
+            response = requests.get(url, timeout=timeout, allow_redirects=True, headers=headers, stream=True)
+        if is_google_news_wrapper(response.url) and not allow_google_news_wrapper:
+            return False
+        return response.status_code not in {400, 404, 410} and response.status_code < 500
+    except requests.RequestException:
+        return False
 
 
 def deduplicate_raw(items: Iterable[RawItem]) -> List[RawItem]:
@@ -78,6 +114,46 @@ def deduplicate_digest(items: Iterable[DigestItem]) -> List[DigestItem]:
     return result
 
 
+def title_similarity(left: str, right: str) -> float:
+    return SequenceMatcher(None, normalize_title(left), normalize_title(right)).ratio()
+
+
+def best_candidate_url(item: DigestItem, candidates: Iterable[RawItem]) -> str:
+    best = None
+    best_score = 0.0
+    for candidate in candidates:
+        if item.kind == "news" and candidate.source_type != "news":
+            continue
+        if not can_publish_url(candidate.url):
+            continue
+        score = title_similarity(item.title, candidate.title)
+        if score > best_score:
+            best = candidate
+            best_score = score
+    if best and best_score >= 0.72 and url_appears_live(best.url):
+        return best.url
+    return ""
+
+
+def repair_or_drop_bad_news_urls(items: Iterable[DigestItem], candidates: Iterable[RawItem]) -> List[DigestItem]:
+    repaired: List[DigestItem] = []
+    candidate_list = list(candidates)
+    for item in items:
+        if item.kind != "news":
+            repaired.append(item)
+            continue
+        if can_publish_url(item.url) and url_appears_live(item.url):
+            repaired.append(item)
+            continue
+        replacement = best_candidate_url(item, candidate_list)
+        if replacement:
+            item.url = replacement
+            repaired.append(item)
+        else:
+            print("Dropped news item with unusable URL: {}".format(item.title))
+    return repaired
+
+
 def analyze_items(raw_items: List[RawItem], track_config: Dict[str, object], track: str, limit: int = 10) -> List[DigestItem]:
     candidates = balanced_candidates(raw_items, track_config)
     prompt_items = [item.to_prompt_dict(index) for index, item in enumerate(candidates)]
@@ -86,6 +162,7 @@ def analyze_items(raw_items: List[RawItem], track_config: Dict[str, object], tra
     data: Dict[str, object] = llm.analyze_batch(prompt_items, limit=limit, track_config=track_config, track=track)
     digest_items = [DigestItem.from_llm(item, default_track=track) for item in data.get("items", [])]
     digest_items = [item for item in digest_items if item.track == track]
+    digest_items = repair_or_drop_bad_news_urls(digest_items, candidates)
     digest_items = deduplicate_digest(digest_items)
     digest_items.sort(key=lambda item: item.score, reverse=True)
     return digest_items[:limit]

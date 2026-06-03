@@ -1,4 +1,5 @@
 from datetime import date
+from difflib import SequenceMatcher
 from typing import Dict, Iterable, List, Optional
 from urllib.parse import urljoin
 
@@ -6,7 +7,7 @@ import requests
 from bs4 import BeautifulSoup
 from dateutil import parser as date_parser
 
-from analyze_items import canonical_url, normalize_title
+from analyze_items import canonical_url, can_publish_url, normalize_title, title_similarity, url_appears_live
 from llm_client import LLMClient
 from models import OpportunityItem
 from opportunity_sources import OPPORTUNITY_SOURCES
@@ -95,6 +96,50 @@ def sort_opportunities(items: Iterable[OpportunityItem]) -> List[OpportunityItem
     return [item for _, item in upcoming] + undated
 
 
+def source_links(sources: Iterable[Dict[str, object]]) -> List[Dict[str, str]]:
+    links: List[Dict[str, str]] = []
+    for source in sources:
+        for link in source.get("links", []):
+            if isinstance(link, dict) and link.get("title") and link.get("url"):
+                links.append({"title": str(link["title"]), "url": str(link["url"])})
+    return links
+
+
+def best_source_link(item: OpportunityItem, links: Iterable[Dict[str, str]]) -> str:
+    best_link = ""
+    best_score = 0.0
+    for link in links:
+        url = link.get("url", "")
+        if not can_publish_url(url):
+            continue
+        score = max(
+            title_similarity(item.title, link.get("title", "")),
+            SequenceMatcher(None, normalize_title(item.url), normalize_title(url)).ratio(),
+        )
+        if score > best_score:
+            best_link = url
+            best_score = score
+    if best_link and best_score >= 0.62 and url_appears_live(best_link):
+        return best_link
+    return ""
+
+
+def repair_or_drop_bad_opportunity_urls(items: Iterable[OpportunityItem], links: Iterable[Dict[str, str]]) -> List[OpportunityItem]:
+    repaired: List[OpportunityItem] = []
+    link_list = list(links)
+    for item in items:
+        if can_publish_url(item.url) and url_appears_live(item.url):
+            repaired.append(item)
+            continue
+        replacement = best_source_link(item, link_list)
+        if replacement:
+            item.url = replacement
+            repaired.append(item)
+        else:
+            print("Dropped opportunity with unusable URL: {}".format(item.title))
+    return repaired
+
+
 def fetch_opportunities(max_items: int = 80) -> List[OpportunityItem]:
     sources = [source for source in (fetch_source_text(source) for source in OPPORTUNITY_SOURCES) if source]
     if not sources:
@@ -103,4 +148,5 @@ def fetch_opportunities(max_items: int = 80) -> List[OpportunityItem]:
     llm = LLMClient()
     data = llm.extract_opportunities(sources=sources, max_items=max_items)
     items = [OpportunityItem.from_llm(item) for item in data.get("items", [])]
+    items = repair_or_drop_bad_opportunity_urls(items, source_links(sources))
     return sort_opportunities(items)
