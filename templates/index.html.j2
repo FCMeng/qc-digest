@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quantum Computing Digest</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f7f4;
+        --ink: #18201d;
+        --muted: #5d6862;
+        --line: #d8ded9;
+        --paper: #ffffff;
+        --accent: #0d766e;
+        --accent-2: #9a5b13;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: var(--ink);
+        background: var(--bg);
+        line-height: 1.5;
+      }
+      header {
+        border-bottom: 1px solid var(--line);
+        background: var(--paper);
+      }
+      .wrap {
+        width: min(1040px, calc(100% - 32px));
+        margin: 0 auto;
+      }
+      .mast {
+        padding: 36px 0 28px;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: clamp(2rem, 5vw, 3.8rem);
+        line-height: 1.05;
+        font-weight: 760;
+        letter-spacing: 0;
+      }
+      .meta {
+        color: var(--muted);
+        margin: 0;
+        font-size: 0.98rem;
+      }
+      main {
+        padding: 28px 0 48px;
+      }
+      section {
+        margin-top: 30px;
+      }
+      h2 {
+        margin: 0 0 14px;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+        gap: 14px;
+      }
+      article {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 18px;
+      }
+      article h3 {
+        margin: 0 0 10px;
+        font-size: 1.08rem;
+        line-height: 1.3;
+        letter-spacing: 0;
+      }
+      article p {
+        margin: 10px 0 0;
+      }
+      .item-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+      .tag {
+        color: #fff;
+        background: var(--accent);
+        border-radius: 999px;
+        padding: 2px 8px;
+        font-size: 0.76rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .tag.news {
+        background: var(--accent-2);
+      }
+      a {
+        color: var(--accent);
+        font-weight: 650;
+        text-decoration-thickness: 0.08em;
+        text-underline-offset: 0.18em;
+      }
+      .empty {
+        color: var(--muted);
+        border: 1px dashed var(--line);
+        padding: 18px;
+        border-radius: 8px;
+      }
+      footer {
+        color: var(--muted);
+        border-top: 1px solid var(--line);
+        padding: 24px 0;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap mast">
+        <h1>Quantum Computing Digest</h1>
+        <p class="meta">Generated {{ generated_at }}. Top {{ items|length }} LLM-selected papers and news items.</p>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section>
+        <h2>Papers</h2>
+        {% if grouped.papers %}
+        <div class="grid">
+          {% for item in grouped.papers %}
+          <article>
+            <div class="item-meta">
+              <span class="tag">Paper</span>
+              <span>{{ item.source }}</span>
+              {% if item.published_date %}<span>{{ item.published_date }}</span>{% endif %}
+              <span>Score {{ "%.1f"|format(item.score) }}</span>
+            </div>
+            <h3>{{ item.title }}</h3>
+            <p>{{ item.summary }}</p>
+            <p><strong>Why selected:</strong> {{ item.why_selected }}</p>
+            <p><a href="{{ item.url }}">Original link</a></p>
+          </article>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty">No papers selected in this run.</p>
+        {% endif %}
+      </section>
+
+      <section>
+        <h2>News</h2>
+        {% if grouped.news %}
+        <div class="grid">
+          {% for item in grouped.news %}
+          <article>
+            <div class="item-meta">
+              <span class="tag news">News</span>
+              <span>{{ item.source }}</span>
+              {% if item.published_date %}<span>{{ item.published_date }}</span>{% endif %}
+              <span>Score {{ "%.1f"|format(item.score) }}</span>
+            </div>
+            <h3>{{ item.title }}</h3>
+            <p>{{ item.summary }}</p>
+            <p><strong>Why selected:</strong> {{ item.why_selected }}</p>
+            <p><a href="{{ item.url }}">Original link</a></p>
+          </article>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty">No news selected in this run.</p>
+        {% endif %}
+      </section>
+    </main>
+
+    <footer>
+      <div class="wrap">Published at <a href="{{ pages_url }}">{{ pages_url }}</a></div>
+    </footer>
+  </body>
+</html>
