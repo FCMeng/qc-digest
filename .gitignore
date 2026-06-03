@@ -3,6 +3,7 @@ __pycache__/
 .venv/
 venv/
 .env
+.deploy-secrets.env
 .DS_Store
 site/index.html
 site/digest.json
