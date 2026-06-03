@@ -84,6 +84,7 @@ def build_track_digest(track: str, days_back: int) -> List:
         terms=config["paper_terms"],
         track=track,
         arxiv_query=config.get("arxiv_query"),
+        rss_categories=config.get("arxiv_rss"),
         days_back=days_back,
     )
     print("Fetched {} {} arXiv candidates.".format(len(papers), label))

@@ -13,6 +13,7 @@ TRACKS = {
             "quantum information theory",
         ],
         "arxiv_query": "cat:quant-ph",
+        "arxiv_rss": ["quant-ph"],
         "news_queries": [
             "quantum computing",
             "quantum information",
@@ -59,6 +60,7 @@ TRACKS = {
             "AI systems",
         ],
         "arxiv_query": "cat:cs.AI OR cat:cs.LG OR cat:cs.CL OR cat:cs.CV OR cat:stat.ML OR cat:cs.RO",
+        "arxiv_rss": ["cs.AI", "cs.LG", "cs.CL", "cs.CV", "stat.ML", "cs.RO"],
         "news_queries": [
             "artificial intelligence",
             "machine learning",
