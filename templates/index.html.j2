@@ -313,8 +313,6 @@
                   <div class="item-meta">
                     <span class="tag">Paper</span>
                     {% if item.category %}<span class="category">{{ item.category }}</span>{% endif %}
-                    <span>{{ item.source }}</span>
-                    {% if item.published_date %}<span>{{ item.published_date }}</span>{% endif %}
                   </div>
                   <h3>{{ item.title }}</h3>
                   <p>{{ item.summary }}</p>
@@ -336,8 +334,6 @@
                 <article>
                   <div class="item-meta">
                     <span class="tag news">News</span>
-                    <span>{{ item.source }}</span>
-                    {% if item.published_date %}<span>{{ item.published_date }}</span>{% endif %}
                   </div>
                   <h3>{{ item.title }}</h3>
                   <p>{{ item.summary }}</p>
