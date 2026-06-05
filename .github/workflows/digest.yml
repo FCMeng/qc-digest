@@ -29,10 +29,19 @@ jobs:
 
       - name: Check Eastern schedule
         id: eastern_schedule
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_SCHEDULE: ${{ github.event.schedule || '' }}
         run: |
-          if [ "${{ github.event_name }}" != "schedule" ]; then
+          if [ "$EVENT_NAME" != "schedule" ]; then
             echo "should_run=true" >> "$GITHUB_OUTPUT"
-          elif [ "$(TZ=America/New_York date +%H)" = "05" ]; then
+            exit 0
+          fi
+
+          expected_cron=$(python -c 'from datetime import datetime; from zoneinfo import ZoneInfo; eastern = datetime.now(ZoneInfo("America/New_York")).replace(hour=5, minute=0, second=0, microsecond=0); print("0 {} * * 1,3,5".format(eastern.astimezone(ZoneInfo("UTC")).hour))')
+          echo "Triggered by schedule: $EVENT_SCHEDULE"
+          echo "Expected 5 AM Eastern schedule today: $expected_cron"
+          if [ "$EVENT_SCHEDULE" = "$expected_cron" ]; then
             echo "should_run=true" >> "$GITHUB_OUTPUT"
           else
             echo "should_run=false" >> "$GITHUB_OUTPUT"
